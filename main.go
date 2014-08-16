@@ -8,16 +8,31 @@ import (
 	"github.com/jeffknupp/sprite/core"
 )
 
-func main() {
-	log.Println("---Starting Sprite---")
-	config := core.ConfigureFromFile("config/sprite.conf")
-	serveAt := config.Host + ":" + strconv.Itoa(config.Port)
+type Sprite struct {
+	Config *core.Configuration
+}
+
+func New() *Sprite {
+	return &Sprite{Config: core.ConfigureFromFile("config/sprite.conf")}
+}
+
+func (s *Sprite) Run() {
+	serveAt := s.Config.Host + ":" + strconv.Itoa(s.Config.Port)
 	http.HandleFunc("/", core.ServeFile)
-	log.Println(config.VirtualHosts)
-	for key, virtualHost := range config.VirtualHosts {
+	for key, virtualHost := range s.Config.VirtualHosts {
 		log.Println("Adding vhost %s", key)
 		go core.ServeVirtualHost(virtualHost)
 	}
 	http.ListenAndServe(serveAt, nil)
+}
+
+func startServer() {
+	s := New()
+	s.Run()
+}
+
+func main() {
+	log.Println("---Starting Sprite---")
+	startServer()
 	log.Println("---Stopping Sprite---")
 }
